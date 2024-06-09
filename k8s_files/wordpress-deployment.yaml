@@ -10,7 +10,7 @@ spec:
   selector:
     app: wordpress
     tier: frontend
-  type: nodePort
+  type: LoadBalancer
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -21,10 +21,9 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: wordpress
   resources:
     requests:
-      storage: 5Gi
+      storage: 20Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -48,10 +47,6 @@ spec:
       containers:
       - image: paulahakeem/wordpress_container_abi:latest
         name: wordpress
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "500m"        
         env:
         - name: WORDPRESS_DB_HOST
           value: wordpress-mysql
@@ -68,18 +63,6 @@ spec:
         volumeMounts:
         - name: wordpress-persistent-storage
           mountPath: /var/www/html
-        livenessProbe:
-          httpGet:
-            path: /wp-login.php
-            port: 80
-          initialDelaySeconds: 60
-          periodSeconds: 60
-        readinessProbe:
-          httpGet:
-            path: /wp-login.php
-            port: 80
-          initialDelaySeconds: 20
-          periodSeconds: 30
       volumes:
       - name: wordpress-persistent-storage
         persistentVolumeClaim:

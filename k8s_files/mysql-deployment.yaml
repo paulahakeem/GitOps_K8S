@@ -21,10 +21,9 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName:  mysql
   resources:
     requests:
-      storage: 5Gi
+      storage: 20Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
