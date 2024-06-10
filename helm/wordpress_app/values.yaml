@@ -8,7 +8,7 @@ image:
   repository: paulahakeem/wordpress_container_abi
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  tag: "73725c8"
 
 
 service:
