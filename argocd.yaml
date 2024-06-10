@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://github.com/paulahakeem/wordpress-container
     targetRevision: helm
-    path: wordpress_app
+    path: helm/wordpress_app
   destination: 
     server: https://kubernetes.default.svc
     namespace: myapp
