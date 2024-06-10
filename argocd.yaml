@@ -8,8 +8,8 @@ spec:
 
   source:
     repoURL: https://github.com/paulahakeem/wordpress-container
-    targetRevision: HEAD
-    path: k8s_files
+    targetRevision: helm
+    path: wordpress_app
   destination: 
     server: https://kubernetes.default.svc
     namespace: myapp
