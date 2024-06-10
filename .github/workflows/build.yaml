@@ -7,18 +7,63 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
-
+    name: Build
     runs-on: ubuntu-latest
-
+    outputs:
+      TAG: ${{ steps.vars.outputs.TAG }}
+      
     steps:
-    - uses: actions/checkout@v3
-    - name: login dockerhub
-      run: docker login -u ${{secrets.DOCKER_USER}} -p ${{secrets.DOCKER_PASS}}    
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Login to DockerHub
+      run: docker login -u ${{secrets.DOCKER_USER}} -p ${{secrets.DOCKER_PASS}}
+
+    - name: Set tag value from short git commit SHA
+      id: vars
+      run: |
+        TAG=$(git rev-parse --short ${{ github.sha }})
+        echo "TAG=$TAG" >> $GITHUB_ENV
+        echo "::set-output name=TAG::$TAG"
+
+    - name: Confirm tag output
+      run: echo ${{ env.TAG }}
+
     - name: Build the Docker image
       run: |
-       docker build . -t ${{ secrets.DOCKER_USER }}/wordpress_container_abi:latest
-       # docker push ${{ secrets.DOCKER_USER }}/wordpress_container_abi:latest
+        docker build . -t "${{ secrets.DOCKER_USER }}/wordpress_container_abi:${{ env.TAG }}"
+        # docker push ${{ secrets.DOCKER_USER }}/wordpress_container_abi:${{ env.TAG }}
+
     - name: Docker push
-      run : docker push ${{ secrets.DOCKER_USER }}/wordpress_container_abi:latest
+      run: docker push "${{ secrets.DOCKER_USER }}/wordpress_container_abi:${{ env.TAG }}"
+
+
+  update-helm:
+    name: Update Helm
+    runs-on: ubuntu-22.04
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: helm  # Specify the branch where the Helm chart is located
+      - name: Confirm tag value
+        run: |
+          TAG="${{ needs.build.outputs.TAG }}"
+          echo $TAG
+      - name: Update Docker image tag in Helm values
+        run: |
+          TAG="${{ needs.build.outputs.TAG }}"
+          echo $TAG
+          sed -i "s|tag: .*|tag: \"$TAG\"|g" helm/wordpress/values.yaml
+      - name: Commit changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add helm/wordpress/values.yaml
+          git commit -m "Update Docker image tag to $TAG"
+      - name: Push changes
+        run: |
+          git push origin helm
